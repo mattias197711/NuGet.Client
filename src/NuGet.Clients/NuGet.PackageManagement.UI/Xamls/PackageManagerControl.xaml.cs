@@ -682,6 +682,17 @@ namespace NuGet.PackageManagement.UI
 
         private void PackageList_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            // AddedItems will have the item that gets selected
+            foreach (PackageItemListViewModel package in e.AddedItems)
+            {
+                package.PrefixReservedIndicatorMoniker = PackageIconMonikers.PrefixReservedIndicatorSelected;
+            }
+            // RemovedItems will have the item that was selected but is being deselected
+            foreach (PackageItemListViewModel package in e.RemovedItems)
+            {
+                package.PrefixReservedIndicatorMoniker = PackageIconMonikers.PrefixReservedIndicator;
+            }
+
             NuGetUIThreadHelper.JoinableTaskFactory.RunAsync(UpdateDetailPaneAsync);
         }
 

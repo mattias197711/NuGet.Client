@@ -12,6 +12,7 @@ using NuGet.PackageManagement.VisualStudio;
 using NuGet.Protocol.Core.Types;
 using NuGet.Versioning;
 using NuGet.VisualStudio;
+using Microsoft.VisualStudio.Imaging.Interop;
 
 namespace NuGet.PackageManagement.UI
 {
@@ -26,6 +27,17 @@ namespace NuGet.PackageManagement.UI
         public NuGetVersion Version { get; set; }
 
         public VersionRange AllowedVersions { get; set; }
+
+        private ImageMoniker _prefixReservedIndicatorMoniker;
+        public ImageMoniker PrefixReservedIndicatorMoniker
+        {
+            get => _prefixReservedIndicatorMoniker;
+            set
+            {
+                _prefixReservedIndicatorMoniker = value;
+                OnPropertyChanged(nameof(PrefixReservedIndicatorMoniker));
+            }
+        }
 
         private string _author;
         public string Author
@@ -241,6 +253,19 @@ namespace NuGet.PackageManagement.UI
             }
         }
 
+        private bool _prefixReserved;
+        public bool PrefixReserved
+        {
+            get { return _prefixReserved; }
+            set
+            {
+                if (_prefixReserved != value)
+                {
+                    _prefixReserved = value;
+                    OnPropertyChanged(nameof(PrefixReserved));
+                }
+            }
+        }
 
         public Uri IconUrl { get; set; }
 

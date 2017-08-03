@@ -19,6 +19,8 @@ namespace NuGet.PackageManagement.VisualStudio
     /// </summary>
     public sealed class MultiSourcePackageFeed : IPackageFeed
     {
+        private const string NUGET_ORG_SOURCE_NAME = "nuget.org";
+
         private static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(5);
         private const int PageSize = 25;
 
@@ -26,6 +28,8 @@ namespace NuGet.PackageManagement.VisualStudio
         private readonly INuGetUILogger _logger;
 
         public bool IsMultiSource => _sourceRepositories.Length > 1;
+
+        public bool IsOnlyLoadingFromNuGetOrg => !IsMultiSource && _sourceRepositories.First<SourceRepository>().ToString() == NUGET_ORG_SOURCE_NAME;
 
         private class AggregatedContinuationToken : ContinuationToken
         {
