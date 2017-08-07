@@ -42,6 +42,7 @@ namespace NuGet.SolutionRestoreManager
 
         private RestoreOperationLogger _logger;
         private INuGetProjectContext _nuGetProjectContext;
+        private PackageRestoreConsent _packageRestoreConsent;
 
         private NuGetOperationStatus _status;
         private int _packageCount;
@@ -74,6 +75,7 @@ namespace NuGet.SolutionRestoreManager
             _sourceRepositoryProvider = sourceRepositoryProvider;
             _restoreEventsPublisher = restoreEventsPublisher;
             _settings = settings;
+            _packageRestoreConsent = new PackageRestoreConsent(_settings);
         }
 
         /// <summary>
@@ -165,6 +167,7 @@ namespace NuGet.SolutionRestoreManager
                     await RestorePackagesOrCheckForMissingPackagesAsync(
                         solutionDirectory,
                         isSolutionAvailable,
+                        restoreSource,
                         token);
                 }
 
@@ -176,6 +179,7 @@ namespace NuGet.SolutionRestoreManager
                     dependencyGraphProjects,
                     forceRestore,
                     isSolutionAvailable,
+                    restoreSource,
                     token);
 
 #if !VS14
@@ -195,9 +199,13 @@ namespace NuGet.SolutionRestoreManager
                 _packageRestoreManager.PackageRestoreFailedEvent -= PackageRestoreManager_PackageRestoreFailedEvent;
 
                 TelemetryUtility.StopTimer();
-
                 var duration = TelemetryUtility.GetTimerElapsedTime();
-                await _logger.WriteSummaryAsync(_status, duration);
+
+                // Do not log any restore message if user disabled restore.
+                if (_packageRestoreConsent.IsGranted)
+                {
+                    await _logger.WriteSummaryAsync(_status, duration);
+                }
 
                 // Emit telemetry event for restore operation
                 EmitRestoreTelemetryEvent(
@@ -236,6 +244,7 @@ namespace NuGet.SolutionRestoreManager
             List<IDependencyGraphProject> projects,
             bool forceRestore,
             bool isSolutionAvailable,
+            RestoreOperationSource restoreSource,
             CancellationToken token)
         {
             // Only continue if there are some build integrated type projects.
@@ -244,7 +253,7 @@ namespace NuGet.SolutionRestoreManager
                 return;
             }
 
-            if (IsConsentGranted(_settings))
+            if (_packageRestoreConsent.IsGranted)
             {
                 if (!isSolutionAvailable)
                 {
@@ -321,6 +330,15 @@ namespace NuGet.SolutionRestoreManager
                         token);
                 }
             }
+            else if (restoreSource == RestoreOperationSource.Explicit)
+            {
+                // When the user consent is not granted, missing packages may not be restored.
+                // So, we just check for them, and report them as warning(s) on the error list window
+                _logger.Do((l, _) =>
+                {
+                    l.ShowError(Resources.PackageRefNotRestoredBecauseOfNoConsent);
+                });
+            }
         }
 
         private bool IsProjectBuildIntegrated(PackageSpec packageSpec)
@@ -393,6 +411,7 @@ namespace NuGet.SolutionRestoreManager
         private async Task RestorePackagesOrCheckForMissingPackagesAsync(
             string solutionDirectory,
             bool isSolutionAvailable,
+            RestoreOperationSource restoreSource,
             CancellationToken token)
         {
             if (string.IsNullOrEmpty(solutionDirectory))
@@ -404,7 +423,7 @@ namespace NuGet.SolutionRestoreManager
             var packages = (await _packageRestoreManager.GetPackagesInSolutionAsync(
                 solutionDirectory, token)).ToList();
 
-            if (IsConsentGranted(_settings))
+            if (_packageRestoreConsent.IsGranted)
             {
                 _currentCount = 0;
 
@@ -444,7 +463,7 @@ namespace NuGet.SolutionRestoreManager
                     _status = NuGetOperationStatus.Succeeded;
                 }
             }
-            else
+            else if (restoreSource == RestoreOperationSource.Explicit)
             {
                 // When the user consent is not granted, missing packages may not be restored.
                 // So, we just check for them, and report them as warning(s) on the error list window
@@ -464,14 +483,14 @@ namespace NuGet.SolutionRestoreManager
         /// </summary>
         private void CheckForMissingPackages(IEnumerable<PackageRestoreData> missingPackages)
         {
-            if (missingPackages.Any())
+            if (missingPackages.Where(p => p.IsMissing).Any())
             {
                 _logger.Do((l, _) =>
                 {
                     var errorText = string.Format(
                         CultureInfo.CurrentCulture,
                         Resources.PackageNotRestoredBecauseOfNoConsent,
-                        string.Join(", ", missingPackages.Select(p => p.ToString())));
+                        string.Join(", ", missingPackages.Select(p => p.PackageReference.ToString())));
                     l.ShowError(errorText);
                 });
             }
