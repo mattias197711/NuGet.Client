@@ -490,7 +490,7 @@ namespace NuGet.SolutionRestoreManager
                     var errorText = string.Format(
                         CultureInfo.CurrentCulture,
                         Resources.PackageNotRestoredBecauseOfNoConsent,
-                        string.Join(", ", missingPackages.Select(p => p.PackageReference.ToString())));
+                        string.Join(", ", missingPackages.Select(p => p.PackageReference.PackageIdentity.ToString())));
                     l.ShowError(errorText);
                 });
             }
