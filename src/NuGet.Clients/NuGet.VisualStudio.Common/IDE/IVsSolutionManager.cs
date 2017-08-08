@@ -16,7 +16,7 @@ namespace NuGet.PackageManagement.VisualStudio
         /// <summary>
         /// Gets the default <see cref="NuGetProject" />. Default NuGetProject is the selected NuGetProject in the IDE.
         /// </summary>
-        Task<NuGetProject> DefaultNuGetProjectAsync();
+        Task<NuGetProject> GetDefaultNuGetProjectAsync();
 
         /// <summary>
         /// Gets the name of the default <see cref="NuGetProject" />. Default NuGetProject is the selected NuGetProject

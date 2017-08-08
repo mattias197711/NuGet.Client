@@ -447,7 +447,7 @@ namespace NuGet.PackageManagement.PowerShellCmdlets
         {
             if (string.IsNullOrEmpty(projectName))
             {
-                Project = await VsSolutionManager.DefaultNuGetProjectAsync();
+                Project = await VsSolutionManager.GetDefaultNuGetProjectAsync();
                 if ((await VsSolutionManager.IsSolutionAvailableAsync())
                     && Project == null)
                 {
@@ -471,7 +471,7 @@ namespace NuGet.PackageManagement.PowerShellCmdlets
         /// <returns></returns>
         protected async Task<IVsProjectAdapter> GetDefaultProjectAsync()
         {
-            var defaultNuGetProject = await VsSolutionManager.DefaultNuGetProjectAsync();
+            var defaultNuGetProject = await VsSolutionManager.GetDefaultNuGetProjectAsync();
             // Solution may be open without a project in it. Then defaultNuGetProject is null.
             if (defaultNuGetProject != null)
             {

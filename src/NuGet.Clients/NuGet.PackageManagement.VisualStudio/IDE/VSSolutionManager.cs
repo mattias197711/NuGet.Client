@@ -62,7 +62,7 @@ namespace NuGet.PackageManagement.VisualStudio
 
         public INuGetProjectContext NuGetProjectContext { get; set; }
 
-        public async Task<NuGetProject> DefaultNuGetProjectAsync()
+        public async Task<NuGetProject> GetDefaultNuGetProjectAsync()
         {
             await EnsureInitializeAsync();
 

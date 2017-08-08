@@ -212,7 +212,7 @@ namespace NuGetConsole.Host.PowerShell.Implementation
 
                 return NuGetUIThreadHelper.JoinableTaskFactory.Run(async () =>
                 {
-                    var defaultProject = await _solutionManager.DefaultNuGetProjectAsync();
+                    var defaultProject = await _solutionManager.GetDefaultNuGetProjectAsync();
                     if (defaultProject == null)
                     {
                         return null;
